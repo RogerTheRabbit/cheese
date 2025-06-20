@@ -4,6 +4,16 @@ import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 
+type CheeseEvent = {
+  cheeser: string;
+  cheesee: string;
+  time: Date;
+};
+
+type AggreatedCheeses = {
+  [key: string]: number;
+};
+
 function App() {
   const [cheeser, setCheeser] = useState("");
   const [cheeses, setCheeses] = useState([]);
@@ -39,11 +49,18 @@ function App() {
           onChange={(e) => setCheeser(e.target.value)}
         />
         <Button onClick={commenceCheesening}>CHEESE</Button>
-        {Object.entries(cheeses)
+        {Object.entries(
+          cheeses.reduce((accumulator: AggreatedCheeses, val: CheeseEvent) => {
+            accumulator[val.cheeser] = (accumulator[val.cheeser] || 0) + 1;
+            accumulator[val.cheesee] = (accumulator[val.cheesee] || 0) - 1;
+
+            return accumulator;
+          }, {})
+        )
           .sort((a, b) => b[1] - a[1])
           .map(([rekt, rektCount]) => {
             return (
-              <Card>
+              <Card key={rekt}>
                 <CardHeader>
                   <CardTitle>{rekt}</CardTitle>
                 </CardHeader>

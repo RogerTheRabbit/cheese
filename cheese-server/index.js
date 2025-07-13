@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const port = 3000;
+const fs = require("fs");
 
 app.set("trust proxy", true);
 
@@ -9,9 +10,26 @@ app.set("trust proxy", true);
 //  ends active development in Oct 2025.
 const db = require("better-sqlite3")("cheese.db");
 
-db.prepare(
-  "CREATE TABLE IF NOT EXISTS cheeses (cheesee TEXT, cheeser TEXT, time INTEGER, comment TEXT)",
-).run();
+const startup = fs.readFileSync("startup.sql", "utf8");
+db.exec(startup);
+
+try {
+  const serverUser = db
+    .prepare(
+      "INSERT INTO users (username) VALUES ('localhost') RETURNING user_id;",
+    )
+    .get();
+  db.prepare(
+    "INSERT INTO devices (ip, device_name, user_id) VALUES ('::1', 'server', :userId);",
+  ).run({ userId: serverUser["user_id"] });
+} catch (error) {
+  // Only log error if it is not the expected constraint error
+  // Surely the "correct" way to do this is to conditionally insert after a fetch but shhh
+  console.log(
+    "Did not insert localhost user to database",
+    !error["code"] === "SQLITE_CONSTRAINT_UNIQUE" ? error : "",
+  );
+}
 
 app.use(
   cors({
@@ -20,13 +38,12 @@ app.use(
 );
 app.use(express.json());
 
-const ipCheeseeMap = { "::1": "local user" };
-
 app.post("/cheese", async (req, res) => {
   const cheeser = req.body.cheeser;
-  const cheesee = ipCheeseeMap[req.ip] || req.ip;
+  const cheeseeIp = req.headers["x-forwarded-for"] || req.ip;
+  const deviceOwner = getDeviceOwner(cheeseeIp);
   const cheeseEvent = {
-    cheesee: cheesee,
+    cheesee: deviceOwner.user_id,
     cheeser: cheeser,
     time: Date.now(),
     comment: "",
@@ -41,6 +58,24 @@ app.post("/cheese", async (req, res) => {
 app.get("/cheese", (req, res) => {
   res.send(db.prepare("SELECT * from cheeses").all());
 });
+
+app.get("/users", (req, res) => {
+  res.send(db.prepare("SELECT * from users").all());
+});
+
+app.get("/whoami", (req, res) => {
+  const ip = req.headers["x-forwarded-for"] || req.ip;
+
+  res.send(getDeviceOwner(ip));
+});
+
+const getDeviceOwner = (ip) => {
+  return db
+    .prepare(
+      "SELECT d.device_name, d.device_id, u.username, u.user_id from devices as d JOIN users as u ON d.user_id = u.user_id WHERE ip = :ip",
+    )
+    .get({ ip: ip });
+};
 
 app.listen(port, () => {
   console.log(`Listening on port ${port}`);

@@ -13,6 +13,14 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Toaster } from "./components/ui/sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./components/ui/dialog";
 
 type CheeseEvent = {
   cheeser: string;
@@ -39,6 +47,7 @@ function App() {
   const [cheeses, setCheeses] = useState<CheeseEvent[]>([]);
   const [cheesee, setCheesee] = useState<DeviceOwner>({} as DeviceOwner);
   const [users, setUsers] = useState<User[]>([]);
+  const [cheesed, setCheesed] = useState(false);
 
   useEffect(() => {
     fetchNerdsThatGotRekt();
@@ -75,13 +84,42 @@ function App() {
       });
     } else {
       fetchNerdsThatGotRekt();
+      setCheesed(true);
     }
+  };
+
+  const userIdToUser = (userId: string | null | undefined) => {
+    if (!userId) {
+      return "unknown user";
+    }
+
+    return (
+      users.find((user) => user.user_id.toString() === userId)?.username ||
+      "unknown user"
+    );
   };
 
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
         <Toaster />
+        <Dialog open={cheesed} onOpenChange={(open) => setCheesed(open)}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>
+                You've been cheesed by{" "}
+                <b>{userIdToUser(cheeser?.toString())}</b>!
+              </DialogTitle>
+              <DialogDescription>
+                Make sure to lock your laptop when you leave it to not get
+                cheesed!
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button onClick={() => setCheesed(false)}>I'll be better!</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Select onValueChange={(val) => setCheeser(val)}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Who are you" />
@@ -113,12 +151,7 @@ function App() {
             return (
               <Card key={rekt}>
                 <CardHeader>
-                  <CardTitle>
-                    {
-                      users.find((user) => user.user_id.toString() === rekt)
-                        ?.username
-                    }
-                  </CardTitle>
+                  <CardTitle>{userIdToUser(rekt)}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p>{rektCount}</p>

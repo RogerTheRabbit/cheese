@@ -42,6 +42,12 @@ app.post("/cheese", async (req, res) => {
   const cheeser = req.body.cheeser;
   const cheeseeIp = req.headers["x-forwarded-for"] || req.ip;
   const deviceOwner = getDeviceOwner(cheeseeIp);
+  if (wasCheesedWithinLastHour(deviceOwner.user_id)) {
+    res
+      .status(400)
+      .send(`${deviceOwner.username} was already cheesed within the last hour`);
+    return;
+  }
   const cheeseEvent = {
     cheesee: deviceOwner.user_id,
     cheeser: cheeser,
@@ -75,6 +81,15 @@ const getDeviceOwner = (ip) => {
       "SELECT d.device_name, d.device_id, u.username, u.user_id from devices as d JOIN users as u ON d.user_id = u.user_id WHERE ip = :ip",
     )
     .get({ ip: ip });
+};
+
+const wasCheesedWithinLastHour = (userId) => {
+  const hourAgo = Date.now() - 3600000; // 1 hour
+  return !!db
+    .prepare(
+      "SELECT * from cheeses WHERE cheeses.time > :hourAgo AND cheesee = :userId LIMIT 1;",
+    )
+    .get({ hourAgo: hourAgo, userId: userId });
 };
 
 app.listen(port, () => {

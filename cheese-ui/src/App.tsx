@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
+import { Toaster } from "./components/ui/sonner";
 
 type CheeseEvent = {
   cheeser: string;
@@ -57,19 +59,29 @@ function App() {
   };
 
   const commenceCheesening = async () => {
-    await fetch("http://localhost:3000/cheese", {
+    const response = await fetch("http://localhost:3000/cheese", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ cheeser: cheeser }),
     });
-    fetchNerdsThatGotRekt();
+
+    const text = await response.text();
+
+    if (response.status !== 200) {
+      toast("Unable to cheese", {
+        description: text || "Failed to submit cheese",
+      });
+    } else {
+      fetchNerdsThatGotRekt();
+    }
   };
 
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
+        <Toaster />
         <Select onValueChange={(val) => setCheeser(val)}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Who are you" />

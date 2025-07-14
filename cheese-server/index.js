@@ -3,6 +3,7 @@ const app = express();
 const cors = require("cors");
 const port = 3000;
 const fs = require("fs");
+const https = require("https");
 
 app.set("trust proxy", true);
 
@@ -109,6 +110,21 @@ const getIpFromReq = (req) => {
   return ip;
 };
 
-app.listen(port, "0.0.0.0", () => {
-  console.log(`Listening on port ${port}`);
+let server = app;
+try {
+  server = https.createServer(
+    {
+      key: fs.readFileSync("privkey.pem"),
+      cert: fs.readFileSync("fullchain.pem"),
+    },
+    app,
+  );
+} catch (error) {
+  console.log("Failed to create HTTPs server, falling back to HTTP", error);
+}
+
+server.listen(port, "0.0.0.0", () => {
+  console.log(
+    `[${server === app ? "HTTP" : "HTTPS"}] Listening on port ${port}`,
+  );
 });

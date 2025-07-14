@@ -52,29 +52,32 @@ function App() {
   useEffect(() => {
     fetchNerdsThatGotRekt();
 
-    fetch("http://localhost:3000/whoami")
+    fetch(`${import.meta.env.VITE_SERVER_URL_BASE}/whoami`)
       .then((resp) => resp.json())
       .then((data) => setCheesee(data));
 
-    fetch("http://localhost:3000/users")
+    fetch(`${import.meta.env.VITE_SERVER_URL_BASE}/users`)
       .then((resp) => resp.json())
       .then((data) => setUsers(data));
   }, []);
 
   const fetchNerdsThatGotRekt = () => {
-    fetch("http://localhost:3000/cheese")
+    fetch(`${import.meta.env.VITE_SERVER_URL_BASE}/cheese`)
       .then((resp) => resp.json())
       .then((data) => setCheeses(data));
   };
 
   const commenceCheesening = async () => {
-    const response = await fetch("http://localhost:3000/cheese", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ cheeser: cheeser }),
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_SERVER_URL_BASE}/cheese`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ cheeser: cheeser }),
+      }
+    );
 
     const text = await response.text();
 

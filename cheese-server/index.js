@@ -40,7 +40,7 @@ app.use(express.json());
 
 app.post("/cheese", async (req, res) => {
   const cheeser = req.body.cheeser;
-  const cheeseeIp = req.headers["x-forwarded-for"] || req.ip;
+  const cheeseeIp = getIpFromReq(req);
   const deviceOwner = getDeviceOwner(cheeseeIp);
   if (!deviceOwner) {
     console.error("Someone tried to cheese an unregistered devic: ", cheeseeIp);
@@ -79,7 +79,7 @@ app.get("/users", (req, res) => {
 });
 
 app.get("/whoami", (req, res) => {
-  const ip = req.headers["x-forwarded-for"] || req.ip;
+  const ip = getIpFromReq(req);
 
   res.send(getDeviceOwner(ip));
 });
@@ -101,6 +101,14 @@ const wasCheesedWithinLastHour = (userId) => {
     .get({ hourAgo: hourAgo, userId: userId });
 };
 
-app.listen(port, () => {
+const getIpFromReq = (req) => {
+  const ip = req.headers["x-forwarded-for"] || req.ip;
+  if (ip.startsWith("::ffff:")) {
+    return ip.substring(7);
+  }
+  return ip;
+};
+
+app.listen(port, "0.0.0.0", () => {
   console.log(`Listening on port ${port}`);
 });

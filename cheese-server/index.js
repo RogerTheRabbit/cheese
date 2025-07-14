@@ -42,7 +42,15 @@ app.post("/cheese", async (req, res) => {
   const cheeser = req.body.cheeser;
   const cheeseeIp = req.headers["x-forwarded-for"] || req.ip;
   const deviceOwner = getDeviceOwner(cheeseeIp);
-  if (wasCheesedWithinLastHour(deviceOwner.user_id)) {
+  if (!deviceOwner) {
+    console.error("Someone tried to cheese an unregistered devic: ", cheeseeIp);
+    res
+      .status(400)
+      .send(
+        `${cheeseeIp} is not a registered device. Please reach out to the Kevin to get this device registered.`,
+      );
+  }
+  if (wasCheesedWithinLastHour(deviceOwner?.user_id)) {
     res
       .status(400)
       .send(`${deviceOwner.username} was already cheesed within the last hour`);

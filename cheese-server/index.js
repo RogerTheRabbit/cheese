@@ -103,7 +103,7 @@ const wasCheesedWithinLastHour = (userId) => {
 };
 
 const getIpFromReq = (req) => {
-  const ip = req.headers["x-forwarded-for"] || req.ip;
+  const ip = req.ip;
   if (ip.startsWith("::ffff:")) {
     return ip.substring(7);
   }

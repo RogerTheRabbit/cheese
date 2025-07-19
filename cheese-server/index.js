@@ -52,6 +52,11 @@ app.post("/cheese", async (req, res) => {
       );
     return;
   }
+  if (cheeser === deviceOwner.user_id) {
+    res.status(400).send("You can't cheese yourself!");
+    return;
+  }
+
   if (wasCheesedWithinLastHour(deviceOwner?.user_id)) {
     res
       .status(400)

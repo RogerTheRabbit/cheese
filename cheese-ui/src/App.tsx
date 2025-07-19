@@ -35,6 +35,7 @@ type AggreatedCheeses = {
 type DeviceOwner = {
   device_name: string;
   username: string;
+  user_id: string;
 };
 
 type User = {
@@ -131,7 +132,11 @@ function App() {
             <SelectGroup>
               <SelectLabel>Users</SelectLabel>
               {users.map((user) => (
-                <SelectItem key={user.user_id} value={user.user_id}>
+                <SelectItem
+                  disabled={user.user_id === cheesee.user_id}
+                  key={user.user_id}
+                  value={user.user_id}
+                >
                   {user.username}
                 </SelectItem>
               ))}

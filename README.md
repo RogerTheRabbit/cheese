@@ -6,4 +6,3 @@
 - [ ] Mabe show most recent Cheeses
 - [ ] Create actual README with pictures
 - [ ] Maybe make a cheese effect when the button Cheese button is pressed
-- [ ] Make theme default to system theme

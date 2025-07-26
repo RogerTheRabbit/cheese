@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./components/ui/dialog";
+import { ThemeProvider } from "./components/theme-provider";
 
 type CheeseEvent = {
   cheeser: string;
@@ -104,71 +105,78 @@ function App() {
   };
 
   return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <Toaster />
-        <Dialog open={cheesed} onOpenChange={(open) => setCheesed(open)}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>
-                You've been cheesed by{" "}
-                <b>{userIdToUser(cheeser?.toString())}</b>!
-              </DialogTitle>
-              <DialogDescription>
-                Make sure to lock your laptop when you leave it to not get
-                cheesed!
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button onClick={() => setCheesed(false)}>I'll be better!</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        <Select onValueChange={(val) => setCheeser(val)}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Who are you" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Users</SelectLabel>
-              {users.map((user) => (
-                <SelectItem
-                  disabled={user.user_id === cheesee.user_id}
-                  key={user.user_id}
-                  value={user.user_id}
-                >
-                  {user.username}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <Button disabled={!cheeser} onClick={commenceCheesening}>
-          Cheese {cheesee.username}'s {cheesee.device_name}
-        </Button>
-        {Object.entries(
-          cheeses.reduce((accumulator: AggreatedCheeses, val: CheeseEvent) => {
-            accumulator[val.cheeser] = (accumulator[val.cheeser] || 0) + 1;
-            accumulator[val.cheesee] = (accumulator[val.cheesee] || 0) - 1;
+    <ThemeProvider defaultTheme="dark" storageKey="cheese-ui-theme">
+      <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+        <div className="flex w-full max-w-sm flex-col gap-6">
+          <Toaster />
+          <Dialog open={cheesed} onOpenChange={(open) => setCheesed(open)}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>
+                  You've been cheesed by{" "}
+                  <b>{userIdToUser(cheeser?.toString())}</b>!
+                </DialogTitle>
+                <DialogDescription>
+                  Make sure to lock your laptop when you leave it to not get
+                  cheesed!
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button onClick={() => setCheesed(false)}>
+                  I'll be better!
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Select onValueChange={(val) => setCheeser(val)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Who are you" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Users</SelectLabel>
+                {users.map((user) => (
+                  <SelectItem
+                    disabled={user.user_id === cheesee.user_id}
+                    key={user.user_id}
+                    value={user.user_id}
+                  >
+                    {user.username}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <Button disabled={!cheeser} onClick={commenceCheesening}>
+            Cheese {cheesee.username}'s {cheesee.device_name}
+          </Button>
+          {Object.entries(
+            cheeses.reduce(
+              (accumulator: AggreatedCheeses, val: CheeseEvent) => {
+                accumulator[val.cheeser] = (accumulator[val.cheeser] || 0) + 1;
+                accumulator[val.cheesee] = (accumulator[val.cheesee] || 0) - 1;
 
-            return accumulator;
-          }, {})
-        )
-          .sort((a, b) => b[1] - a[1])
-          .map(([rekt, rektCount]) => {
-            return (
-              <Card key={rekt}>
-                <CardHeader>
-                  <CardTitle>{userIdToUser(rekt)}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>{rektCount}</p>
-                </CardContent>
-              </Card>
-            );
-          })}
+                return accumulator;
+              },
+              {}
+            )
+          )
+            .sort((a, b) => b[1] - a[1])
+            .map(([rekt, rektCount]) => {
+              return (
+                <Card key={rekt}>
+                  <CardHeader>
+                    <CardTitle>{userIdToUser(rekt)}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>{rektCount}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+        </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 }
 

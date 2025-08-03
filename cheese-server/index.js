@@ -115,21 +115,25 @@ const getIpFromReq = (req) => {
   return ip;
 };
 
-let server = app;
-try {
-  server = https.createServer(
-    {
-      key: fs.readFileSync("privkey.pem"),
-      cert: fs.readFileSync("fullchain.pem"),
-    },
-    app,
-  );
-} catch (error) {
-  console.log("Failed to create HTTPs server, falling back to HTTP", error);
+let usingHttps = false;
+if (process.argv[2] !== "development") {
+  try {
+    app = https.createServer(
+      {
+        key: fs.readFileSync("privkey.pem"),
+        cert: fs.readFileSync("fullchain.pem"),
+      },
+      app,
+    );
+    usingHttps = true;
+  } catch (error) {
+    console.error(
+      "Failed to create HTTPs server, falling back to HTTP\n",
+      error,
+    );
+  }
 }
 
-server.listen(port, "0.0.0.0", () => {
-  console.log(
-    `[${server === app ? "HTTP" : "HTTPS"}] Listening on port ${port}`,
-  );
+app.listen(port, "0.0.0.0", () => {
+  console.log(`[${usingHttps ? "HTTPS" : "HTTP"}] Listening on port ${port}`);
 });

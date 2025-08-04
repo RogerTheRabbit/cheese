@@ -64,13 +64,13 @@ app.post("/cheese", async (req, res) => {
             .map((user) => `- ${user.username}: ${user.user_id}`)
             .join("\n")}
 
-        Query: INSERT INTO devices (ip, device_name, user_id) VALUES(${cheeseeIp}, ${device}, [USER_ID])
+        Query: INSERT INTO devices (ip, device_name, user_id) VALUES("${cheeseeIp}", "${device}", "[USER_ID]")
       `,
     });
     res
       .status(400)
       .send(
-        `${cheeseeIp} is not a registered device. Please reach out to the Kevin to get this device registered.`,
+        `${cheeseeIp} is not a registered device. Please let Kevin know who's device you tried to cheese.`,
       );
     return;
   }
@@ -148,8 +148,6 @@ const getUserFromId = (userId) => {
 };
 
 const getDeviceOrOSFromUserAgent = (userAgent) => {
-  console.log(userAgent.getDevice(), userAgent.getOS());
-
   const device = userAgent.getDevice();
 
   return Object.values(device).filter((val) => !!val).length

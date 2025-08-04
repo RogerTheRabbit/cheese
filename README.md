@@ -2,6 +2,7 @@
 
 - [ ] Refactor project to modularize server
   - [ ] Allow ability to disable Discord functionality
+- [ ] Add "Admin" UI to easily add users to server (make it deep linkable)
 - [ ] Better logger
 - [ ] Deactivate button if device is not cheesable + notice on why
 - [ ] Add note functionality to Cheese

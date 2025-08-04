@@ -157,17 +157,16 @@ const getDeviceOrOSFromUserAgent = (userAgent) => {
     : userAgent.getOS()?.name;
 };
 
-let usingHttps = false;
+let httpsApp;
 if (process.argv[2] !== "development") {
   try {
-    app = https.createServer(
+    httpsApp = https.createServer(
       {
         key: fs.readFileSync("privkey.pem"),
         cert: fs.readFileSync("fullchain.pem"),
       },
       app,
     );
-    usingHttps = true;
   } catch (error) {
     console.error(
       "Failed to create HTTPs server, falling back to HTTP\n",
@@ -176,6 +175,6 @@ if (process.argv[2] !== "development") {
   }
 }
 
-app.listen(port, "0.0.0.0", () => {
-  console.log(`[${usingHttps ? "HTTPS" : "HTTP"}] Listening on port ${port}`);
+(httpsApp || app).listen(port, "0.0.0.0", () => {
+  console.log(`[${httpsApp ? "HTTPS" : "HTTP"}] Listening on port ${port}`);
 });

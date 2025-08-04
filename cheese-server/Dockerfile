@@ -12,4 +12,4 @@ RUN git checkout main
 WORKDIR /src/cheese-server
 RUN npm install
 EXPOSE 3000
-ENTRYPOINT ["npm", "run", "dev"]
+ENTRYPOINT ["npm", "run", "prod"]

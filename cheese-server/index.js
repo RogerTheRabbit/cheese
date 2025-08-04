@@ -1,15 +1,19 @@
-const express = require("express");
+import express from "express";
+import cors from "cors";
+import fs from "fs";
+import https from "https";
+// TODO: Consider switching to Node's Sqlite implementation in node v24 when it
+//  ends active development in Oct 2025.
+import sqlite3 from "better-sqlite3";
+import discord from "./modules/discord/discord.js";
+import { UAParser } from "ua-parser-js";
+
 const app = express();
-const cors = require("cors");
 const port = 3000;
-const fs = require("fs");
-const https = require("https");
 
 app.set("trust proxy", true);
 
-// TODO: Consider switching to Node's Sqlite implementation in node v24 when it
-//  ends active development in Oct 2025.
-const db = require("better-sqlite3")("cheese.db");
+const db = sqlite3("cheese.db");
 
 const startup = fs.readFileSync("startup.sql", "utf8");
 db.exec(startup);
@@ -40,11 +44,29 @@ app.use(
 app.use(express.json());
 
 app.post("/cheese", async (req, res) => {
-  const cheeser = req.body.cheeser;
+  const cheeser = getUserFromId(req.body.cheeser);
   const cheeseeIp = getIpFromReq(req);
   const deviceOwner = getDeviceOwner(cheeseeIp);
   if (!deviceOwner) {
-    console.error("Someone tried to cheese an unregistered devic: ", cheeseeIp);
+    const userAgent = new UAParser(req.headers["user-agent"]);
+    const device = `${JSON.stringify(getDeviceOrOSFromUserAgent(userAgent))}`;
+    console.error(
+      `Someone tried to cheese an unregistered ip/device: ${cheeseeIp} / ${device}`,
+    );
+    discord.sendMessage({
+      title: `${cheeser.username} tried to cheese an unregistered device`,
+      description: `
+        IP Address: ${cheeseeIp}
+        Device: ${device}
+
+        Users:
+          ${getAllUsers()
+            .map((user) => `- ${user.username}: ${user.user_id}`)
+            .join("\n")}
+
+        Query: INSERT INTO devices (ip, device_name, user_id) VALUES(${cheeseeIp}, ${device}, [USER_ID])
+      `,
+    });
     res
       .status(400)
       .send(
@@ -52,7 +74,7 @@ app.post("/cheese", async (req, res) => {
       );
     return;
   }
-  if (cheeser === deviceOwner.user_id) {
+  if (cheeser.user_id === deviceOwner.user_id) {
     res.status(400).send("You can't cheese yourself!");
     return;
   }
@@ -65,7 +87,7 @@ app.post("/cheese", async (req, res) => {
   }
   const cheeseEvent = {
     cheesee: deviceOwner.user_id,
-    cheeser: cheeser,
+    cheeser: cheeser.user_id,
     time: Date.now(),
     comment: "",
   };
@@ -81,7 +103,7 @@ app.get("/cheese", (req, res) => {
 });
 
 app.get("/users", (req, res) => {
-  res.send(db.prepare("SELECT * from users").all());
+  res.send(getAllUsers());
 });
 
 app.get("/whoami", (req, res) => {
@@ -89,6 +111,10 @@ app.get("/whoami", (req, res) => {
 
   res.send(getDeviceOwner(ip));
 });
+
+const getAllUsers = () => {
+  return db.prepare("SELECT * from users").all();
+};
 
 const getDeviceOwner = (ip) => {
   return db
@@ -113,6 +139,22 @@ const getIpFromReq = (req) => {
     return ip.substring(7);
   }
   return ip;
+};
+
+const getUserFromId = (userId) => {
+  return db
+    .prepare("SELECT * from users WHERE user_id = :user_id")
+    .get({ user_id: userId });
+};
+
+const getDeviceOrOSFromUserAgent = (userAgent) => {
+  console.log(userAgent.getDevice(), userAgent.getOS());
+
+  const device = userAgent.getDevice();
+
+  return Object.values(device).filter((val) => !!val).length
+    ? `[${device.type || "Unknown"}] ${device.vendor + device.model}`
+    : userAgent.getOS()?.name;
 };
 
 let usingHttps = false;
